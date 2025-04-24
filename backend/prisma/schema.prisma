@@ -16,9 +16,10 @@ enum Status {
 }
 
 model VideoData {
-  id        Int    @id @default(autoincrement())
-  videoName String @unique
-  duration  Float @default(0)
-  size      Float @default(0)
-  status    Status @default(NULL)
+  id        Int     @id @default(autoincrement())
+  videoName String  @unique
+  duration  Float   @default(0)
+  size      Float   @default(0)
+  status    Status  @default(NULL)
+  isTrimmed Boolean @default(false)
 }

@@ -47,7 +47,8 @@ const videoUploadHandler = async (req: Request, res: Response) => {
         return
     }
     res.status(201).json({
-        message: "Upload successful"
+        message: "Upload successful",
+        id: uploadVideoDBResult.data.id
     })
 }
 
