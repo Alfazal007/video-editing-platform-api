@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import multer, { type FileFilterCallback } from "multer";
 
-const storage = multer.diskStorage({
+const storageVideo = multer.diskStorage({
     destination: function(req, file_, cb) {
         cb(null, "./uploads/videos/original");
     },
@@ -11,7 +11,18 @@ const storage = multer.diskStorage({
     },
 });
 
-const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+
+const storageSubtitles = multer.diskStorage({
+    destination: function(req, file_, cb) {
+        cb(null, "./uploads/subtitles");
+    },
+
+    filename: function(req, file, cb) {
+        cb(null, file.originalname);
+    },
+});
+
+const fileFilterVideo = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
     if (file.mimetype.startsWith('video/')) {
         cb(null, true);
     } else {
@@ -19,8 +30,16 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallb
     }
 };
 
-const safeMulter = (req: Request, res: Response, next: NextFunction) => {
-    upload.single("video")(req, res, (err: any) => {
+const fileFilterSubtitles = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+    if (file.mimetype === "application/x-subrip") {
+        cb(null, true)
+    } else {
+        cb(null, false);
+    }
+};
+
+const safeMulterVideo = (req: Request, res: Response, next: NextFunction) => {
+    uploadVideo.single("video")(req, res, (err: any) => {
         if (err instanceof multer.MulterError) {
             return res.status(400).json({ message: err.message });
         } else if (err) {
@@ -30,12 +49,29 @@ const safeMulter = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
-export const upload = multer({
-    storage,
-    fileFilter,
+const safeMulterSubtitles = (req: Request, res: Response, next: NextFunction) => {
+    uploadSubtitles.single("subtitles")(req, res, (err: any) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ message: err.message });
+        } else if (err) {
+            return res.status(500).json({ message: 'Upload failed.' });
+        }
+        next();
+    });
+};
+
+export const uploadVideo = multer({
+    storage: storageVideo,
+    fileFilter: fileFilterVideo,
     limits: { fileSize: 100 * 1024 * 1024 }
 });
 
+export const uploadSubtitles = multer({
+    storage: storageSubtitles,
+    fileFilter: fileFilterSubtitles,
+});
+
 export {
-    safeMulter
+    safeMulterVideo,
+    safeMulterSubtitles
 }

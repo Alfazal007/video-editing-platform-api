@@ -1,10 +1,10 @@
-import type { Response, Request } from "express";
-import { tryCatch } from "../helpers/tryCatch";
-import { prisma } from "../prisma";
-import path from "path";
-import { VideoManager } from "../videoManager/videoManager";
+import type { Request, Response } from "express"
+import path from "path"
+import { tryCatch } from "../helpers/tryCatch"
+import { prisma } from "../prisma"
+import { VideoManager } from "../videoManager/videoManager"
 
-const trimVideoHandler = async (req: Request, res: Response) => {
+const addSubtitlesHandler = async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id) {
         res.status(400).json({
@@ -13,16 +13,9 @@ const trimVideoHandler = async (req: Request, res: Response) => {
         return
     }
 
-    if (!req.body) {
+    if (!req.file) {
         res.status(400).json({
-            message: "Need both start and end timestamps in request body"
-        })
-        return
-    }
-    const { startTime, endTime }: { startTime: string, endTime: string } = req.body
-    if (!startTime || !endTime) {
-        res.status(400).json({
-            message: "Need both start and end timestamps in request body"
+            message: "No subtitles file provided or invalid subtitles file provided"
         })
         return
     }
@@ -80,8 +73,9 @@ const trimVideoHandler = async (req: Request, res: Response) => {
         return
     }
 
-    let trimVideoResult = await tryCatch(VideoManager.getInstance().trimVideo(videoPath, startTime, endTime))
-    if (trimVideoResult.error) {
+    const subtitlesFilePath = path.join(__dirname, `../uploads/subtitles/${req.file.filename}`)
+    const burnSubtitlesResult = await tryCatch(VideoManager.getInstance().burnSubtitles(videoPath, subtitlesFilePath))
+    if (burnSubtitlesResult.error) {
         await tryCatch(prisma.videoData.update({
             where: {
                 id: videoFromDbResult.data.id
@@ -91,7 +85,7 @@ const trimVideoHandler = async (req: Request, res: Response) => {
             }
         }))
         res.status(400).json({
-            message: "Could not trim the video, recheck your provided arguments"
+            message: "Error while burning subtitles into the video"
         })
         return
     }
@@ -107,27 +101,26 @@ const trimVideoHandler = async (req: Request, res: Response) => {
             }
         }))
         res.status(500).json({
-            message: "Could not trim the video, issue moving the file internally"
+            message: "Could not add subtitles to the video, issue moving the file internally"
         })
     }
-
     await tryCatch(prisma.videoData.update({
         where: {
             id: videoFromDbResult.data.id,
         },
         data: {
             status: "UPLOADED",
-            isEdited: true,
             duration: videoDuration,
-            size: videoSize
+            size: videoSize,
+            isEdited: true
         }
     }))
-
     res.status(200).json({
-        message: "Trimmed successfully"
+        message: "Subtitles added to the video"
     })
 }
 
 export {
-    trimVideoHandler
+    addSubtitlesHandler
 }
+

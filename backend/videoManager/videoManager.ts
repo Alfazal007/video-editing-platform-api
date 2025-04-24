@@ -39,14 +39,55 @@ export class VideoManager {
         });
     }
 
-    async moveTempFileToEditSection(videoName: string): Promise<boolean> {
+    async moveTempFileToEditSection(videoName: string): Promise<[boolean, number, number]> {
         const oldPath = path.join(__dirname, `../uploads/videos/temp/${videoName}`)
         const newPath = path.join(__dirname, `../uploads/videos/edited/${videoName}`)
+        const videoDuration = await tryCatch(VideoManager.getInstance().getVideoDuration(oldPath))
+        if (videoDuration.error) {
+            return [false, 0, 0]
+        }
+        const videoSize = await tryCatch(fs.stat(oldPath))
+        if (videoSize.error) {
+            return [false, 0, 0]
+        }
         let moveFileResult = await tryCatch(fs.rename(oldPath, newPath))
         if (moveFileResult.error) {
-            return false
+            return [false, 0, 0]
         }
-        return true
+        return [true, videoDuration.data, videoSize.data.size]
+    }
+
+    getVideoDuration(filePath: string): Promise<number> {
+        return new Promise((resolve, reject) => {
+            ffmpeg.ffprobe(filePath, (err, metadata) => {
+                if (err) return reject(err);
+                const duration = metadata.format.duration;
+                resolve(duration ?? 0);
+            });
+        });
+    }
+
+    burnSubtitles(videoPath: string, subtitleFilePath: string): Promise<boolean> {
+        const newPath = videoPath.replace("edited", "temp").replace("original", "temp")
+        return new Promise((resolve, reject) => {
+            ffmpeg(videoPath)
+                .outputOptions([
+                    `-vf subtitles='${subtitleFilePath}':force_style='Alignment=2'`,
+                    '-c:v libx264',
+                    '-c:a aac',
+                    '-strict experimental',
+                    '-b:a 192k'
+                ])
+                .on('end', () => {
+                    console.log('Subtitles burned into video successfully!');
+                    resolve(true);
+                })
+                .on('error', (err) => {
+                    console.error(`Error: ${err.message}`);
+                    reject(err);
+                })
+                .save(newPath);
+        });
     }
 }
 

@@ -1,7 +1,7 @@
 import type { Response, Request } from "express";
 import { tryCatch } from "../helpers/tryCatch";
-import { getVideoDuration } from "../helpers/ffmpeg/getDuration";
 import { prisma } from "../prisma";
+import { VideoManager } from "../videoManager/videoManager";
 
 const videoUploadHandler = async (req: Request, res: Response) => {
     if (!req.file) {
@@ -11,7 +11,7 @@ const videoUploadHandler = async (req: Request, res: Response) => {
         return
     }
 
-    const videoDurationResult = await tryCatch(getVideoDuration(req.file.path))
+    const videoDurationResult = await tryCatch(VideoManager.getInstance().getVideoDuration(req.file.path))
     if (videoDurationResult.error) {
         const failedUpdateResultDB = await tryCatch(prisma.videoData.create({
             data: {
