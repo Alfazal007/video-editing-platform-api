@@ -28,11 +28,9 @@ export class VideoManager {
                 .setDuration(duration)
                 .output(videoPath.replace("original", "temp").replace("edited", "temp"))
                 .on('end', () => {
-                    console.log('Trimming finished successfully.');
                     resolve(true)
                 })
                 .on('error', (err) => {
-                    console.error('Error occurred: ' + err.message);
                     reject(err);
                 })
                 .run();
@@ -79,11 +77,9 @@ export class VideoManager {
                     '-b:a 192k'
                 ])
                 .on('end', () => {
-                    console.log('Subtitles burned into video successfully!');
                     resolve(true);
                 })
                 .on('error', (err) => {
-                    console.error(`Error: ${err.message}`);
                     reject(err);
                 })
                 .save(newPath);
