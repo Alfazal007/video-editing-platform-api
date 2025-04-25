@@ -56,6 +56,4 @@ bun -v
    bun index.ts
    ```
 
----
-
 ```
