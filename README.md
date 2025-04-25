@@ -22,7 +22,7 @@ bun -v
 1. **Navigate to the backend directory**
 
    ```bash
-   cd backend/
+   cd backend/ && bun intsall
    ```
 
 2. **Create a `.env` file**
