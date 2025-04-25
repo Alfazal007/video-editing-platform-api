@@ -55,5 +55,4 @@ bun -v
    ```bash
    bun index.ts
    ```
-
 ```
