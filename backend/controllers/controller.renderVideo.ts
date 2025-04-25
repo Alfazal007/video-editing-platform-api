@@ -1,5 +1,4 @@
 import type { Response, Request } from "express";
-import path from "path";
 import { tryCatch } from "../helpers/tryCatch";
 import { prisma } from "../prisma";
 
@@ -45,13 +44,8 @@ const renderVideoHandler = async (req: Request, res: Response) => {
         return
     }
 
-    const pathLink = `${videoFromDbResult.data.isEdited ? "edited" : "original"}`
-    const videoPath = path.join(__dirname, `../uploads/videos/${pathLink}/${videoFromDbResult.data.videoName}`)
-
-    // TODO:: Think about what to do after this
-
     res.status(200).json({
-        message: "Endpoint to render video"
+        videoUrl: `http://localhost:8000/api/videos/${videoFromDbResult.data.id}/download`
     })
 }
 
